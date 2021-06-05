@@ -508,7 +508,7 @@ contract Market {
         paw.transfer( profit_getter, sale_fee_volume );
         rest -= sale_fee_volume;
         
-        paw.transfer( msg.sender, rest );
+        paw.transfer( dapplink.ownerOf( _token_id ), rest );
         
         dapplink.transferFrom(  dapplink.ownerOf( _token_id ),  msg.sender,  _token_id  );
         
@@ -566,8 +566,8 @@ contract PAW is SafeMath {
     mapping( address => uint) public balances;
     mapping( address => mapping( address => uint )) public allowed;
     
-    // event Transfer (address indexed from, address indexed to, uint tokens);
-    // event Approval (address indexed _token_owner, address indexed _spender, uint _tokens);
+    //event Transfer (address indexed from, address indexed to, uint tokens);
+    //event Approval (address indexed _token_owner, address indexed _spender, uint _tokens);
 
     constructor() public {
         symbol      = "PAW";
@@ -585,13 +585,13 @@ contract PAW is SafeMath {
     function transfer( address to, uint tokens ) public returns( bool success ) {
         balances[ msg.sender ] = safeSub(  balances[ msg.sender ],  tokens  );
         balances[ to ]         = safeAdd(  balances[ to ],          tokens  );
-        // emit Transfer(msg.sender, to, tokens);
+        //emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
     function approve( address spender, uint tokens ) public returns( bool success ) {
         allowed[ msg.sender ][ spender ] = tokens;
-        // emit Approval(msg.sender, spender, tokens);
+        //emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
@@ -599,7 +599,7 @@ contract PAW is SafeMath {
         balances[ from ]              = safeSub(  balances[ from ],               tokens  );
         allowed[ from ][ msg.sender ] = safeSub(  allowed[ from ][ msg.sender ],  tokens  );
         balances[ to ]                = safeAdd(  balances[ to ],                 tokens  );
-        // emit Transfer(from, to, tokens);
+        //emit Transfer(from, to, tokens);
         return true;
     }
 
@@ -620,7 +620,7 @@ contract PAW is SafeMath {
         uint256 tokens = msg.value * 1000;
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         totalSupply = safeAdd(totalSupply, tokens);
-        // emit Transfer(address(0), msg.sender, tokens);
+        //emit Transfer(address(0), msg.sender, tokens);
         owner.send(msg.value);
     }
 }
