@@ -237,6 +237,7 @@ contract Dapplink {
 
 }
 
+
 interface ERC721TokenReceiver {
     function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes calldata _data) external returns(bytes4);
 }
@@ -318,20 +319,20 @@ contract Minter {
 }
 
 
-contract Royalty {
+contract Residue {
     
     mapping( uint256 => mapping( uint8 => address )) public beneficiaries;
     mapping( uint256 => mapping( uint8 => uint8   )) public share_of_beneficiary;
     mapping( uint256 => uint8 )                      public number_of_beneficiaries;
-    mapping( uint256 => uint8 )                      public royalty_percent;
+    mapping( uint256 => uint8 )                      public residue_percent;
     
-    uint256 public royalty_percent_limit;
+    uint256 public residue_percent_limit;
     
     Dapplink dapplink;
     
     constructor( address _dapplink_contract ) public {
         dapplink = Dapplink( _dapplink_contract );
-        royalty_percent_limit = 10;
+        residue_percent_limit = 10;
     }
     
      modifier token_owner_only( uint256 _token_id ) {
@@ -352,9 +353,9 @@ contract Royalty {
         number_of_beneficiaries[ _token_id ]--;
     }
     
-    function set_royalty_percent( uint256 _token_id, uint8 _royalty_percent ) public token_owner_only( _token_id ) {
-        require( _royalty_percent <= royalty_percent_limit );
-        royalty_percent[ _token_id ] = _royalty_percent;
+    function set_residue_percent( uint256 _token_id, uint8 _residue_percent ) public token_owner_only( _token_id ) {
+        require( _residue_percent <= residue_percent_limit );
+        residue_percent[ _token_id ] = _residue_percent;
     }
     
 }
@@ -416,7 +417,7 @@ contract Market {
     Dapplink private dapplink;
     PAW      private paw;
     Charity  private charity;
-    Royalty  private royalty;
+    Residue  private residue;
     
     uint256 public sale_fee_permille;
     uint256 public listing_fee;
@@ -431,14 +432,14 @@ contract Market {
         (
             address         _dapplink_contract, 
             address         _charity_contract, 
-            address         _royalty_contract,
+            address         _residue_contract,
             address payable _paw_contract,
             address         _profit_getter
         ) public {
         dapplink          = Dapplink ( _dapplink_contract );
         paw               = PAW      ( _paw_contract      );
         charity           = Charity  ( _charity_contract  );
-        royalty           = Royalty  ( _royalty_contract  );
+        residue           = Residue  ( _residue_contract  );
         admin             = msg.sender;
         profit_getter     = _profit_getter;
         sale_fee_permille = 29;
@@ -488,16 +489,16 @@ contract Market {
         uint charity_volume  = pricelist[ _token_id ] * charity_permille  / 1000;
         uint sale_fee_volume = pricelist[ _token_id ] * sale_fee_permille / 1000;
         
-        bool has_to_pay_royalty = royalty.royalty_percent( _token_id ) > 0 && royalty.number_of_beneficiaries( _token_id ) > 0;
-        if ( has_to_pay_royalty ) {
-            uint royalty_volume = pricelist[ _token_id ] * royalty.royalty_percent( _token_id ) / 100;
+        bool has_to_pay_residue = residue.residue_percent( _token_id ) > 0 && residue.number_of_beneficiaries( _token_id ) > 0;
+        if ( has_to_pay_residue ) {
+            uint residue_volume = pricelist[ _token_id ] * residue.residue_percent( _token_id ) / 100;
             uint total_shares = 0;
-            for (uint8 i = 1; i <= royalty.number_of_beneficiaries( _token_id ); i++) {
-                total_shares += royalty.share_of_beneficiary( _token_id, i );
+            for (uint8 i = 1; i <= residue.number_of_beneficiaries( _token_id ); i++) {
+                total_shares += residue.share_of_beneficiary( _token_id, i );
             }
-            for (uint8 i = 1; i <= royalty.number_of_beneficiaries( _token_id ); i++) {
-                uint payment = royalty_volume / total_shares * royalty.share_of_beneficiary( _token_id, i );
-                paw.transfer(  royalty.beneficiaries( _token_id, i ),  payment  );
+            for (uint8 i = 1; i <= residue.number_of_beneficiaries( _token_id ); i++) {
+                uint payment = residue_volume / total_shares * residue.share_of_beneficiary( _token_id, i );
+                paw.transfer(  residue.beneficiaries( _token_id, i ),  payment  );
                 rest -= payment;
             }
         }
@@ -566,8 +567,8 @@ contract PAW is SafeMath {
     mapping( address => uint) public balances;
     mapping( address => mapping( address => uint )) public allowed;
     
-    //event Transfer (address indexed from, address indexed to, uint tokens);
-    //event Approval (address indexed _token_owner, address indexed _spender, uint _tokens);
+    event Transfer (address indexed from, address indexed to, uint tokens);
+    event Approval (address indexed _token_owner, address indexed _spender, uint _tokens);
 
     constructor() public {
         symbol      = "PAW";
@@ -585,13 +586,13 @@ contract PAW is SafeMath {
     function transfer( address to, uint tokens ) public returns( bool success ) {
         balances[ msg.sender ] = safeSub(  balances[ msg.sender ],  tokens  );
         balances[ to ]         = safeAdd(  balances[ to ],          tokens  );
-        //emit Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
     function approve( address spender, uint tokens ) public returns( bool success ) {
         allowed[ msg.sender ][ spender ] = tokens;
-        //emit Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
@@ -599,7 +600,7 @@ contract PAW is SafeMath {
         balances[ from ]              = safeSub(  balances[ from ],               tokens  );
         allowed[ from ][ msg.sender ] = safeSub(  allowed[ from ][ msg.sender ],  tokens  );
         balances[ to ]                = safeAdd(  balances[ to ],                 tokens  );
-        //emit Transfer(from, to, tokens);
+        emit Transfer(from, to, tokens);
         return true;
     }
 
@@ -620,7 +621,7 @@ contract PAW is SafeMath {
         uint256 tokens = msg.value * 1000;
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         totalSupply = safeAdd(totalSupply, tokens);
-        //emit Transfer(address(0), msg.sender, tokens);
+        emit Transfer(address(0), msg.sender, tokens);
         owner.send(msg.value);
     }
 }
