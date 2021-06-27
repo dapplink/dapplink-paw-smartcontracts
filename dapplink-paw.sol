@@ -285,6 +285,12 @@ contract Minter {
         uint256 total_price = get_total_price( _domain );
         require(  paw.allowance( msg.sender,  address(this) ) >= total_price, "No enough approved PAWs"  );
         
+        bytes memory byte_string = bytes( _domain );
+        bytes1 firstSymbol = byte_string[0];
+        bool start_with_digit = firstSymbol >= "0" && firstSymbol <= "9";
+        require( !start_with_digit, "Domain can not start with digit" );
+        require( byte_string.length < 64, "Domain name is too long" );
+        
         uint256 domain_hash = uint256(keccak256(abi.encodePacked(_domain)));
         uint256 domain_match = uint256(keccak256(abi.encodePacked(dapplink.domains(domain_hash))));
         require( domain_match != domain_hash );
