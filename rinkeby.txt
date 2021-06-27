@@ -3,7 +3,7 @@
 |----------+--------------------------------------------|
 | paw      | 0xD14f977512250dCE566ca7568eB6A084078e0b23 |
 | dapplink | 0x9BB4303f2e9E2ae5eBC80b2Aa48A80bbb28235D4 |
-| minter   | 0x8e0568269cafaa3D0C66A0668599fBC761cD961C |
+| minter   | 0xeAec21f17d77bFE2e12213D161b21066F7b08029 |
 | charity  | 0x9Ada92d55cD220F74bc3D1a7702032e2811F3040 |
 | resiude  | 0x18e49FBA79e283277d1919C286066E85F03f5fC4 |
 | market   | 0x1036F6522D3F1b1289Eb5Ec7aAD73669407ef769 |
