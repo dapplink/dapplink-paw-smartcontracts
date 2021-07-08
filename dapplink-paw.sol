@@ -187,11 +187,28 @@ contract Dapplink {
 
     function withdraw( address payable _address ) external wheel_only {
         _address.send(  address( this ).balance  );
-    }       
+    }
+    
+    function addressToString( address _address ) private pure returns( string memory ) {
+        bytes32 _bytes = bytes32( uint256( _address));
+        bytes memory HEX = "0123456789abcdef";
+        bytes memory _string = new bytes(42);
+        _string[ 0 ] = '0';
+        _string[ 1 ] = 'x';
+        for (uint i = 0; i < 20; i++) {
+            _string[2+i*2] = HEX[uint8(_bytes[i + 12] >> 4)];
+            _string[3+i*2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
+        }
+        return string( _string );
+    }
+    
+    function isProfileDomain( uint256 token_id, address _address ) private view returns ( bool ) {
+        return uint256( keccak256( abi.encodePacked( addressToString( _address)))) == token_id;
+    }
 
     modifier token_owner_only( uint256 tokenId ) {
-        require( msg.sender == ownerOf( tokenId ) );
-        require( closed[ tokenId ] == false );
+        require( msg.sender == ownerOf( tokenId) || isProfileDomain( tokenId, msg.sender));
+        require( closed[ tokenId ] == false);
         _;
     } 
         
@@ -260,8 +277,8 @@ contract Minter {
         dapplink      = Dapplink( _dapplink_contract );
         paw           = PAW     ( _paw_contract );
         
-        // price_by_word = [10,9,8,7,6,5];
-        ordinary_domain_price = 2;
+        price_by_word = [10,9,8,7,6,5]; // TODO put into constructor para
+        ordinary_domain_price = 2; // TODO put into constructor para
         admin = msg.sender;
         profit = msg.sender;
     }
