@@ -277,7 +277,7 @@ contract Minter {
         dapplink      = Dapplink( _dapplink_contract );
         paw           = PAW     ( _paw_contract );
         
-        price_by_word = [10,9,8,7,6,5]; // TODO put into constructor para
+        // price_by_word = [10,9,8,7,6,5]; TODO put into constructor para
         ordinary_domain_price = 2; // TODO put into constructor para
         admin = msg.sender;
         profit = msg.sender;
@@ -365,6 +365,7 @@ contract Residue {
     } 
     
     function add_beneficiary( uint256 _token_id, address _beneficiary, uint8 _share ) public token_owner_only( _token_id ) {
+        require( _share > 0 );
         number_of_beneficiaries[ _token_id ]++;
         beneficiaries       [ _token_id ][ number_of_beneficiaries[_token_id] ] = _beneficiary;
         share_of_beneficiary[ _token_id ][ number_of_beneficiaries[_token_id] ] = _share;
